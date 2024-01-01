@@ -5,6 +5,7 @@ namespace App\Http;
 use App\Http\Request;
 use Closure;
 use Exception;
+use ReflectionFunction;
 
 class Router 
 {
@@ -32,8 +33,6 @@ class Router
 
     private function createRoute($method, $route, $params = [])
     {
-        $routePattern = '/^'.str_replace('/', '\/', $route).'$/';
-
         foreach($params as $key => $value) {
             if($value instanceof Closure) {
                 $params['controller'] = $value;
@@ -41,6 +40,17 @@ class Router
                 continue;
             }
         }
+
+        $params['variables'] = [];
+
+        $variablePattern = '/{(.*?)}/';
+
+        if(preg_match_all($variablePattern, $route, $matches)) {
+            $route = preg_replace($variablePattern, '(.*?)', $route);
+            $params['variables'] = $matches[1];
+        }
+
+        $routePattern = '/^'.str_replace('/', '\/', $route).'$/';
 
         $this->routes[$routePattern][$method] = $params;
     }
@@ -61,8 +71,14 @@ class Router
         $httpMethod = $this->request->getHttpMethod();
 
         foreach($this->routes as $routePattern => $method) {
-            if(preg_match($routePattern, $uri)) {
-                if($method[$httpMethod]) {
+            if(preg_match($routePattern, $uri, $matches)) {
+                if(isset($method[$httpMethod])) {
+                    unset($matches[0]);
+
+                    $keys = $method[$httpMethod]['variables'];
+                    $method[$httpMethod]['variables'] = array_combine($keys, $matches);
+                    $method[$httpMethod]['variables']['request'] = $this->request;
+
                     return $method[$httpMethod];
                 }
     
@@ -82,10 +98,15 @@ class Router
                 throw new Exception("Essa requisição não pode ser processada", 500);
             }
 
-            // ARGUMENTOS DA FUNÇÃO
             $args = [];
 
-            // RETORNA A EXECUÇÃO DA FUNÇÃO
+            $reflection = new ReflectionFunction($route['controller']);
+
+            foreach($reflection->getParameters() as $parameter) {
+                $name = $parameter->getName();
+                $args[$name] = $route['variables'][$name] ?? '';
+            }
+
             return call_user_func_array($route['controller'], $args);
         } catch (Exception $e) {
             return new Response($e->getCode(), $e->getMessage());

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\AboutController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\HomeController;
 use App\Http\Response;
 use App\Http\Router;
@@ -13,8 +13,8 @@ $obRouter->get('/', [
     }
 ]);
 
-$obRouter->get('/sobre', [
+$obRouter->get('/products', [
     function(){
-        return new Response(200, AboutController::about());
+        return new Response(200, ProductController::index());
     }
 ]);

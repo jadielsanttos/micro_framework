@@ -27,18 +27,18 @@ class Router
     {
         $prefix = parse_url($this->url)['path'];
 
-        return $this->prefix = $prefix;
+        $this->prefix = $prefix;
     }
 
     private function createRoute($method, $route, $params = [])
     {
-
         $routePattern = '/^'.str_replace('/', '\/', $route).'$/';
 
         foreach($params as $key => $value) {
             if($value instanceof Closure) {
                 $params['controller'] = $value;
                 unset($params[$key]);
+                continue;
             }
         }
 
@@ -61,16 +61,16 @@ class Router
         $httpMethod = $this->request->getHttpMethod();
 
         foreach($this->routes as $routePattern => $method) {
-            if(!preg_match($routePattern, $uri)) {
-                if(!$method[$httpMethod]) {
-                    throw new Exception("Método não permitido!", 405);
+            if(preg_match($routePattern, $uri)) {
+                if($method[$httpMethod]) {
+                    return $method[$httpMethod];
                 }
-
-                throw new Exception("404, Página não encontrada!", 404);
+    
+                throw new Exception("Método não permitido!", 405);
             }
-
-            return $method[$httpMethod];
         }
+
+        throw new Exception("404, Página não encontrada!", 404);
     }
 
     public function run()

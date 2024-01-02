@@ -9,14 +9,30 @@ use ReflectionFunction;
 
 class Router 
 {
+    /**
+     * @var string $url
+     */
     private $url = '';
 
+    /**
+     * @var string $prefix
+     */
     private $prefix = '';
 
+    /**
+     * @var array $routes
+     */
     private $routes = [];
 
+    /**
+     * @var Request $request
+     */
     private $request;
 
+    /**
+     * Constructor
+     * @param string $url
+     */
     public function __construct($url)
     {
         $this->url     = $url;
@@ -24,14 +40,26 @@ class Router
         $this->setPrefix();
     }
 
-    private function setPrefix()
+    /**
+     * Set prefix
+     * @return string
+     */
+    private function setPrefix(): string
     {
         $prefix = parse_url($this->url)['path'];
 
         $this->prefix = $prefix;
+
+        return $prefix;
     }
 
-    private function createRoute($method, $route, $params = [])
+    /**
+     * Create a route
+     * @param string $method
+     * @param string $route
+     * @param array $params
+     */
+    private function createRoute($method, $route, $params = []): void
     {
         foreach($params as $key => $value) {
             if($value instanceof Closure) {
@@ -55,7 +83,11 @@ class Router
         $this->routes[$routePattern][$method] = $params;
     }
 
-    private function getUri()
+    /**
+     * Get URI
+     * @return string
+     */
+    private function getUri(): string
     {
         $uri = $this->request->getUri();
 
@@ -64,7 +96,11 @@ class Router
         return end($xUri);
     }
 
-    private function getRoute()
+    /**
+     * Get current route
+     * @return array
+     */
+    private function getRoute(): array
     {
         $uri = $this->getUri();
 
@@ -89,7 +125,11 @@ class Router
         throw new Exception("404, Página não encontrada!", 404);
     }
 
-    public function run()
+    /**
+     * Run the routes
+     * @return Response
+     */
+    public function run(): Response
     {
         try {
             $route = $this->getRoute();
@@ -113,11 +153,21 @@ class Router
         }
     }
 
+    /**
+     * Register a route get
+     * @param string $route
+     * @param array $params
+     */
     public function get($route, $params = [])
     {
         return $this->createRoute('GET', $route, $params);
     }
 
+    /**
+     * Register a route post
+     * @param string $route
+     * @param array $params
+     */
     public function post($route, $params = [])
     {
         return $this->createRoute('POST', $route, $params);

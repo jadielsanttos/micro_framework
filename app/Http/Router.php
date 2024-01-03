@@ -103,7 +103,7 @@ class Router
      */
     private function getRoute(): array
     {
-        $uri = $this->getUri();
+        $uri = explode('?', $this->getUri())[0];
 
         $httpMethod = $this->request->getHttpMethod();
 

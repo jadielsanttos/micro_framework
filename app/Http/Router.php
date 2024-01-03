@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Controllers\NotFoundController;
 use App\Http\Request;
 use Closure;
 use Exception;
@@ -118,11 +119,12 @@ class Router
                     return $method[$httpMethod];
                 }
     
-                throw new Exception("Método não permitido!", 405);
+                throw new Exception("405, o método enviado não é permitido!", 405);
             }
         }
 
-        throw new Exception("404, Página não encontrada!", 404);
+        $response = new Response(404, NotFoundController::page404());
+        return $response->sendResponse();
     }
 
     /**
